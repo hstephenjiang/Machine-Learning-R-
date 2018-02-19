@@ -1,0 +1,56 @@
+```{r}
+library(neuralnet)
+require(dplyr)
+hts <- read.csv("C:/Users/jhb_f/Desktop/Spring 2018 A/Data Mining/wk5/hts.csv")
+
+hts$subs <- c(hts$subscriber == 1)
+hts$nosubs <- c(hts$subscriber == 0)
+
+## Partition the data into training and validation sets
+## 50% of the sample size
+smp_size <- floor(0.5 * nrow(hts))
+
+## set the seed to make the partition reproducible
+set.seed(123)
+train_ind <- sample(seq_len(nrow(hts)), size = smp_size)
+
+train <- hts[train_ind, ]
+validation <- hts[-train_ind, ]
+validation <-  validation %>%
+      mutate(subs_label = ifelse(subscriber == "0", "nosubs", "subs"))
+
+
+## Train the ANN
+nn <- neuralnet(subs + nosubs
+                  ~ rooms + bubble_five
+                  + reviews + reviews_per_room
+                  + management_response_rate, 
+                  train, hidden=3, linear.output = FALSE)
+#plot(nn, rep="best")
+
+## Predict subscriber for the validation dataset
+predict <- neuralnet::compute(nn, validation[1:5])$net.result
+
+## Extract predicted values on validation set and construct a confusion matrix
+net.prediction <- c("subs","nosubs")[apply(predict,1,which.max)]
+
+
+predict.table <- table(validation$subs_label, net.prediction)
+
+predict.table
+
+
+## Alternatively see more diagnostics with a confusion matrix function
+require(caret)
+require(e1071)
+confusionMatrix(predict.table)
+
+dim(validation)
+```
+
+```{r}
+dd1 <- cbind(validation, predict)
+dd1 <- dd1 %>%
+  mutate(subs_pred = ifelse(dd1$"1" >= 0.5, 1, 0))
+head(dd1,20)
+```

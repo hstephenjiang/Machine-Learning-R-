@@ -1,0 +1,46 @@
+```{r}
+library(neuralnet)
+iris <- read.csv("C:/Users/jhb_f/Desktop/Spring 2018 A/Data Mining/iris.csv")
+
+## Create three classification variables
+iris$setosa <- c(iris$species == "setosa")
+iris$versicolor <- c(iris$species == "versicolor")
+iris$virginica <- c(iris$species == "virginica")
+
+## Partition the data into training and validation sets
+## 75% of the sample size
+smp_size <- floor(0.75 * nrow(iris))
+
+## set the seed to make the partition reproducible
+set.seed(123)
+train_ind <- sample(seq_len(nrow(iris)), size = smp_size)
+
+train <- iris[train_ind, ]
+validation <- iris[-train_ind, ]
+
+## Train the ANN
+nn <- neuralnet(setosa + versicolor + virginica 
+                  ~ sepalLength + sepalWidth 
+                  + petalLength + petalWidth, 
+                  train, hidden=3, linear.output = FALSE)
+#plot(nn, rep="best")
+
+## Predict Species for the validation dataset
+predict <- compute(nn, validation[2:5])$net.result
+
+
+## Extract predicted values on validation set and construct a confusion matrix
+net.prediction <- c("setosa","versicolor","virginica")[apply(predict,1,which.max)]
+
+
+predict.table <- table(validation$species,net.prediction)
+
+predict.table
+
+## Alternatively see more diagnostics with a confusion matrix function
+require(caret)
+require(e1071)
+confusionMatrix(predict.table)
+
+dim(validation)
+```

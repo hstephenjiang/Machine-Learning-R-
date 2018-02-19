@@ -1,0 +1,23 @@
+```{r}
+library(caret)
+library(ggplot2)
+library(dplyr)
+
+df <- read.csv("C:/Users/jhb_f/Desktop/Spring 2018 A/Data Mining/wk4/clean_default.csv")
+df$default = as.factor(df$default)
+levels(df$default) <- make.names(levels(df$default))
+trControl <- trainControl(method  = "repeatedcv",
+                          number  = 5,
+                          classProbs = TRUE,
+                          summaryFunction=multiClassSummary)
+model1 <- train(
+    default~., 
+    data=df, 
+    method='knn',
+    tuneGrid=expand.grid(.k=1:50),
+    metric = 'ROC',
+    trControl=trControl)
+model1
+plot(model1)
+```
+
